@@ -34,10 +34,6 @@ ENV/
 # Data & artifacts
 # ===============================
 data/raw/
-data/interim/
-data/processed/
-data/external/
-
 # DVC tracked data should NOT be ignored
 !.dvc
 !.dvcignore
