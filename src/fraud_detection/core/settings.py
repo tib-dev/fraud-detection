@@ -63,16 +63,10 @@ def load_config(config_dir: Path = None) -> Dict:
 
 
 class PathRegistry:
-    """
-    Resolves and optionally creates project paths using YAML definitions.
-    Example:
-        paths = PathRegistry(root, config)
-        paths.DATA["raw_dir"] -> Path("data/raw")
-    """
-
     def __init__(self, root: Path, config: Dict, create_dirs: bool = True):
         self.root = root.resolve()
         self._paths: Dict[str, Dict[str, Path]] = {}
+        # Get the paths dict, default to empty if not found
         paths_cfg = config.get("paths", {})
 
         for section, mapping in paths_cfg.items():
@@ -83,12 +77,20 @@ class PathRegistry:
                     path.mkdir(parents=True, exist_ok=True)
                 resolved[key] = path
 
-            self._paths[section] = resolved
+            # Store in internal dict
+            self._paths[section.lower()] = resolved
+            # Explicitly set the uppercase attribute for dot notation
             setattr(self, section.upper(), resolved)
 
     def __getitem__(self, section: str) -> Dict[str, Path]:
-        return getattr(self, section.upper())
+        # Allows settings.paths["data"]
+        return self._paths[section.lower()]
 
+    def __getattr__(self, name: str) -> Dict[str, Path]:
+        # Allows settings.paths.DATA even if setattr had issues
+        if name.lower() in self._paths:
+            return self._paths[name.lower()]
+        raise AttributeError(f"'PathRegistry' has no attribute '{name}'")
 # -------------------------
 # Central settings
 # -------------------------
