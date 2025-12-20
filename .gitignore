@@ -1,0 +1,94 @@
+# ===============================
+# Python
+# ===============================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+
+# ===============================
+# Virtual environments
+# ===============================
+.venv/
+venv/
+env/
+ENV/
+
+# ===============================
+# Environment variables
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# Jupyter
+# ===============================
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# ===============================
+# Data & artifacts
+# ===============================
+data/raw/
+data/interim/
+data/processed/
+data/external/
+
+# DVC tracked data should NOT be ignored
+!.dvc
+!.dvcignore
+
+# ===============================
+# MLflow
+# ===============================
+mlruns/
+mlartifacts/
+
+# ===============================
+# Logs & outputs
+# ===============================
+logs/
+*.log
+reports/plots/
+reports/*.html
+reports/*.pdf
+
+# ===============================
+# Testing & coverage
+# ===============================
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ===============================
+# IDEs & editors
+# ===============================
+.vscode/
+.idea/
+.spyderproject
+.spyproject
+*.swp
+*.swo
+
+# ===============================
+# OS
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Build / packaging
+# ===============================
+build/
+dist/
+*.whl
+
+# ===============================
+# Docker
+# ===============================
+docker/.env
