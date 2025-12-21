@@ -1,3 +1,4 @@
+# Base Dependencies
 numpy
 pandas
 scikit-learn
@@ -17,7 +18,7 @@ shap
 matplotlib
 seaborn
 
-[dev]
+# Development Dependencies
 pytest
 pytest-cov
 black
@@ -27,5 +28,5 @@ pre-commit
 mypy
 codecov
 
-[fast]
+# Optional Fast Processing
 rapidfuzz
