@@ -1,0 +1,41 @@
+features:
+  # -----------------------------
+  # Target column
+  # -----------------------------
+  target: class
+
+  # -----------------------------
+  # Numerical features
+  # (Scaled using StandardScaler)
+  # -----------------------------
+  numeric:
+    - purchase_value
+    - age
+    - time_since_signup
+    - hour_of_day
+    - day_of_week
+    - tx_count_1h
+    - tx_count_24h
+    - device_id_count
+    - ip_address_count
+
+  # -----------------------------
+  # Categorical features
+  # (Label encoded safely)
+  # -----------------------------
+  categorical:
+    - source
+    - browser
+    - sex
+    - country
+
+  # -----------------------------
+  # Columns excluded from modeling
+  # -----------------------------
+  drop:
+    - user_id
+    - device_id
+    - signup_time
+    - purchase_time
+    - ip_address
+

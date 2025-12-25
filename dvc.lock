@@ -1,0 +1,27 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python scripts/run_pipeline.py -- Fraud_Data.csv 
+      IpAddress_to_Country.csv
+    deps:
+    - path: data/raw/Fraud_Data.csv
+      hash: md5
+      md5: 0fcc51517d0d244a9799fe06be3fa135
+      size: 16074450
+    - path: data/raw/IpAddress_to_Country.csv
+      hash: md5
+      md5: 820bd8a75ecfe6e120123dfeb30f1844
+      size: 4894783
+    - path: scripts/run_pipeline.py
+      hash: md5
+      md5: c6a0375dc966d5c3e38dc702e8cc8d67
+      size: 4527
+    outs:
+    - path: data/processed/test_original.parquet
+      hash: md5
+      md5: 55a19a90f448cb2491e4fbcf74a1ea50
+      size: 599833
+    - path: data/processed/train_resampled.parquet
+      hash: md5
+      md5: 8d24ab4ce345be1567baec2fff98598a
+      size: 9241152

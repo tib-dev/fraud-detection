@@ -33,10 +33,6 @@ ENV/
 # ===============================
 # Data & artifacts
 # ===============================
-data/raw/
-# DVC tracked data should NOT be ignored
-!.dvc
-!.dvcignore
 
 # ===============================
 # MLflow

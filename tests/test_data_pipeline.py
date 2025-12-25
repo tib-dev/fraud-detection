@@ -1,78 +1,109 @@
-from pandas.api.types import is_numeric_dtype
 import pandas as pd
-import numpy as np
+from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import SMOTE
 
-from fraud_detection.features.feature_builder import FraudFeatureEngineer
+from fraud_detection.core.settings import settings
+from fraud_detection.data.cleaning import DataCleaning
+from fraud_detection.features.pipeline import build_feature_pipeline
+import fraud_detection.data.ip_geolocation as ip
 
-def test_fraud_feature_engineer():
-    print("🧪 Starting Pipeline Tests...\n")
 
-    # 1. Setup Mock Data
-    fraud_data = pd.DataFrame({
-        'user_id': [1, 2, 3],
-        'signup_time': ['2023-01-01 10:00:00', '2023-01-01 10:00:00', '2023-01-01 10:00:00'],
-        'purchase_time': ['2023-01-01 10:00:05', '2023-01-01 11:00:00', '2023-01-02 10:00:00'],
-        'purchase_value': [100, 200, 300],
-        'device_id': ['D1', 'D1', 'D2'],
-        # Representing IP ints
-        'ip_address': [167772161, 167772161, 335544321],
-        'source': ['SEO', 'Ads', 'SEO'],
-        'browser': ['Chrome', 'Safari', 'Chrome'],
-        'sex': ['M', 'F', 'M'],
-        'class': [0, 1, 0]  # Imbalanced target
+def test_pipeline():
+    # -----------------------------
+    # 1. Load a robust sample of raw data
+    # -----------------------------
+    # We need enough rows so that:
+    # - Stratified split can put Class 1 in both Train and Test.
+    # - SMOTE has enough "neighbors" to generate synthetic data.
+    fraud_df = pd.DataFrame({
+        "user_id": range(1, 11),
+        "signup_time": ["2020-01-01 08:00:00"] * 10,
+        "purchase_time": ["2020-01-05 08:00:00"] * 10,
+        "purchase_value": [100, 150, 200, 250, 300, 100, 150, 200, 250, 300],
+        "device_id": [f"d{i}" for i in range(10)],
+        "source": ["web", "app"] * 5,
+        "browser": ["Chrome", "Firefox", "Safari", "Edge", "Opera"] * 2,
+        "sex": ["M", "F"] * 5,
+        "age": [30, 25, 40, 35, 22, 31, 28, 45, 33, 24],
+        "ip_address": [3232235776 + i for i in range(10)],
+        "class": [0, 1, 0, 0, 1, 0, 1, 0, 0, 1],  # 4 Fraud (1), 6 Legit (0)
+        "country": ["US", "UK", "US", "US", "UK", "US", "UK", "US", "US", "UK"]
     })
 
-    country_data = pd.DataFrame({
-        'lower_bound_ip_address': [167772160, 335544320],
-        'upper_bound_ip_address': [167772165, 335544325],
-        'country': ['Japan', 'USA']
+    ip_df = pd.DataFrame({
+        "lower_bound_ip_address": [3232235776],
+        "upper_bound_ip_address": [3232235800],
+        "country": ["US"]
     })
 
-    engineer = FraudFeatureEngineer()
+    # -----------------------------
+    # 2. Clean fraud data
+    # -----------------------------
+    cleaner = DataCleaning(
+        drop_duplicates=True,
+        duplicate_subset=["user_id", "purchase_time", "purchase_value"],
+        strip_strings=True,
+        protected_string_columns=["user_id", "device_id", "ip_address"],
+        empty_string_as_nan=True,
+        datetime_columns=["signup_time", "purchase_time"],
+        numeric_columns=["purchase_value", "age"],
+        verbose=False
+    )
+    cleaned_df = cleaner.clean(fraud_df)
 
-    # --- Test 1: IP Merge ---
-    df_merged = engineer.merge_with_country(fraud_data, country_data)
-    assert 'country' in df_merged.columns
-    assert df_merged.iloc[0]['country'] == 'Japan'
-    print("✅ Test IP Merge: Passed")
+    # -----------------------------
+    # 3. Clean IP reference
+    # -----------------------------
+    ip_country_df = ip.clean_ip_country_table(ip_df)
+    cleaned_df = ip.normalize_ip_column(cleaned_df, ip_col="ip_address")
+    df = ip.map_ip_to_country(cleaned_df, ip_country_df)
 
-    # --- Test 2: Time Features ---
-    df_time = engineer.extract_time_features(df_merged)
-    assert df_time.iloc[0]['time_since_signup'] == 5.0
-    assert 'hour_of_day' in df_time.columns
-    print("✅ Test Time Features: Passed")
+    # -----------------------------
+    # 4. Prepare features and target
+    # -----------------------------
+    FEATURES = settings.get("features")
+    TARGET = FEATURES["target"]
+    NUM_COLS = FEATURES["numeric"]
+    CAT_COLS = FEATURES["categorical"]
 
-    # --- Test 3: Velocity Features ---
-    df_velocity = engineer.extract_velocity_features(df_time)
-    assert df_velocity[df_velocity['device_id']
-                       == 'D1']['device_id_count'].iloc[0] == 2
-    print("✅ Test Velocity Features: Passed")
+    X = df.drop(columns=[TARGET])
+    y = df[TARGET]
 
-    # --- Test 4: Preprocessing (Scaling & Encoding) ---
-    num_cols = ['purchase_value', 'time_since_signup', 'device_id_count']
-    df_processed = engineer.preprocess_pipeline(df_velocity, num_cols)
+    # -----------------------------
+    # 5. Train/test split (Stratify now works with 4 fraud samples)
+    # -----------------------------
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, stratify=y, random_state=42
+    )
 
-    # Verify scaling (Mean should be approx 0)
-    engineer.verify(df_processed)
-    # Verify encoding (Should be numeric, not strings)
-    assert is_numeric_dtype(df_processed['source'])
-    print("✅ Test Preprocessing: Passed")
+    # -----------------------------
+    # 6. Feature pipeline
+    # -----------------------------
+    feature_pipeline = build_feature_pipeline(NUM_COLS, CAT_COLS)
+    X_train_transformed = feature_pipeline.fit_transform(X_train)
+    X_test_transformed = feature_pipeline.transform(X_test)
 
-    # --- Test 5: Split & SMOTE ---
-    # To test SMOTE, we need a slightly larger dataset to avoid split errors
-    # We'll just check if it returns the correct 4 objects
-    try:
-        # Create a tiny balanced set for the split test
-        big_df = pd.concat([df_processed]*10, ignore_index=True)
-        X_train, X_test, y_train, y_test = engineer.split_and_resample(big_df)
-        assert len(X_train) == len(y_train)
-        assert y_train.value_counts(normalize=True)[1] == 0.5
-        print("✅ Test Split & SMOTE: Passed")
-    except Exception as e:
-        print(f"⚠️ SMOTE test skipped or failed (needs more data): {e}")
+    # -----------------------------
+    # 7. SMOTE on training data
+    # -----------------------------
+    # NOTE: Set k_neighbors=1 because our training set is still very small
+    smote = SMOTE(random_state=42, k_neighbors=1)
+    X_train_resampled, y_train_resampled = smote.fit_resample(
+        X_train_transformed, y_train
+    )
 
-    print("\n🚀 ALL PIPELINE TESTS PASSED!")
+    print("\n--- Class Distribution AFTER SMOTE ---")
+    print(y_train_resampled.value_counts(normalize=True).map("{:.2%}".format))
+
+    # -----------------------------
+    # 8. Assertions (Important for Testing)
+    # -----------------------------
+    assert y_train_resampled.value_counts()[0] == y_train_resampled.value_counts()[
+        1], "SMOTE failed to balance classes"
+    assert len(X_test_transformed) > 0, "Test set should not be empty"
+
+    print("\n[SUCCESS] Pipeline test passed.")
 
 
-# Run it
-test_fraud_feature_engineer()
+if __name__ == "__main__":
+    test_pipeline()
