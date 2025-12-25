@@ -14,13 +14,17 @@ stages:
       size: 4894783
     - path: scripts/run_pipeline.py
       hash: md5
-      md5: c6a0375dc966d5c3e38dc702e8cc8d67
-      size: 4527
+      md5: 9eb3ff010cb4868208b5b2eeccb667a2
+      size: 5259
     outs:
     - path: data/processed/test_original.parquet
       hash: md5
       md5: 55a19a90f448cb2491e4fbcf74a1ea50
       size: 599833
+    - path: data/processed/train_original.parquet
+      hash: md5
+      md5: 03c7591d6f0d9e891d877dd3f54bda09
+      size: 2026875
     - path: data/processed/train_resampled.parquet
       hash: md5
       md5: 8d24ab4ce345be1567baec2fff98598a
