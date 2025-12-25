@@ -1,0 +1,10 @@
+stages:
+  preprocess:
+    cmd: python scripts/run_pipeline.py -- Fraud_Data.csv IpAddress_to_Country.csv
+    deps:
+      - scripts/run_pipeline.py
+      - data/raw/Fraud_Data.csv
+      - data/raw/IpAddress_to_Country.csv
+    outs:
+      - data/processed/train_resampled.parquet
+      - data/processed/test_original.parquet
