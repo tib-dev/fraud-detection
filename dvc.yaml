@@ -8,3 +8,4 @@ stages:
     outs:
       - data/processed/train_resampled.parquet
       - data/processed/test_original.parquet
+      - data/processed/train_original.parquet
