@@ -1,4 +1,4 @@
 [core]
     remote = gdrive
 ['remote "gdrive"']
-    url = G:/My Drive/dvc_storage/fraud-detection
+    url = G:/My Drive/dvc-storage/fraud-detection
