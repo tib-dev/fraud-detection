@@ -8,8 +8,8 @@ class Visualizer:
     def __init__(self, theme="whitegrid"):
         """Initializes the visualizer with a consistent professional theme."""
         sns.set_theme(style=theme)
-        self.total_color = "#3498db"  # Trust Blue
-        self.fraud_color = "#e74c3c"  # Risk Red
+        self.total_color = "#3498db"   # Trust Blue
+        self.fraud_color = "#e74c3c"   # Risk Red
         self.neutral_color = "#bdc3c7"  # Grey
         # Unified palette to handle both string '0'/'1' and int 0/1
         self.palette = {0: self.total_color, 1: self.fraud_color,
@@ -21,8 +21,13 @@ class Visualizer:
         pcts = df[target_col].value_counts(normalize=True) * 100
 
         plt.figure(figsize=(9, 6))
-        ax = sns.countplot(data=df, x=target_col,
-                           palette=self.palette, hue=target_col, legend=False)
+        ax = sns.countplot(
+            data=df,
+            x=target_col,
+            hue=target_col,
+            palette=self.palette,
+            dodge=False
+        )
 
         for p in ax.patches:
             height = p.get_height()
@@ -34,7 +39,8 @@ class Visualizer:
 
         plt.title('Transaction Class Distribution',
                   loc='left', fontsize=16, pad=20)
-        plt.ylabel('Count'), plt.xlabel('Class (0: Legitimate, 1: Fraudulent)')
+        plt.ylabel('Count')
+        plt.xlabel('Class (0: Legitimate, 1: Fraudulent)')
         plt.ylim(0, stats.max() * 1.2)
         sns.despine()
         plt.show()
@@ -44,13 +50,27 @@ class Visualizer:
         fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
         # Plot 1: Purchase Value
-        sns.histplot(data=df, x='purchase_value', hue='class', kde=True, element="step",
-                     palette=self.palette, ax=axes[0])
+        sns.histplot(
+            data=df,
+            x='purchase_value',
+            hue='class',
+            kde=True,
+            element="step",
+            palette=self.palette,
+            ax=axes[0]
+        )
         axes[0].set_title('Distribution of Purchase Value', fontsize=15)
 
         # Plot 2: Age
-        sns.histplot(data=df, x='age', hue='class', kde=True, element="step",
-                     palette=self.palette, ax=axes[1])
+        sns.histplot(
+            data=df,
+            x='age',
+            hue='class',
+            kde=True,
+            element="step",
+            palette=self.palette,
+            ax=axes[1]
+        )
         axes[1].set_title('Distribution of User Age', fontsize=15)
 
         plt.tight_layout()
@@ -59,11 +79,26 @@ class Visualizer:
     def plot_purchase_value_boxplot(self, df):
         """Bivariate boxplot with mean markers for Purchase Value analysis."""
         plt.figure(figsize=(10, 7))
-        sns.boxplot(data=df, x='class', y='purchase_value',
-                    palette=self.palette, linewidth=2)
 
-        sns.pointplot(data=df, x='class', y='purchase_value', estimator=np.mean,
-                      color='black', markers='D', scale=0.6, join=False)
+        # Boxplot
+        sns.boxplot(
+            data=df,
+            x='class',
+            y='purchase_value',
+            palette=self.palette,
+            linewidth=2
+        )
+
+        # Mean markers with pointplot (v0.14+ safe)
+        sns.pointplot(
+            data=df,
+            x='class',
+            y='purchase_value',
+            estimator=np.mean,
+            color='black',
+            marker='D',
+            linestyle='none'
+        )
 
         plt.title('Purchase Value: Legitimate vs. Fraudulent',
                   fontsize=16, pad=20)
@@ -72,16 +107,17 @@ class Visualizer:
 
     def plot_top_countries(self, df, top_n=20):
         """Optimized: Uses pre-calculated counts to speed up rendering."""
-        # Pre-calculate counts (fast Pandas operation)
         counts = df['country'].value_counts().head(top_n).reset_index()
         counts.columns = ['country', 'count']
 
         plt.figure(figsize=(12, 8))
-        # Pass the pre-summarized dataframe to Seaborn
-        ax = sns.barplot(data=counts, x='count',
-                         y='country', palette="viridis")
+        ax = sns.barplot(
+            data=counts,
+            x='count',
+            y='country',
+            palette="viridis"
+        )
 
-        # Add labels using the summarized data
         max_val = counts['count'].max()
         for i, v in enumerate(counts['count']):
             ax.text(v + (max_val * 0.01), i,
@@ -95,17 +131,22 @@ class Visualizer:
 
     def plot_fraud_rate_by_country(self, df, top_n=10):
         """Optimized: Pre-aggregates mean to avoid heavy Seaborn computation."""
-        # Pre-calculate the rate (fast GroupBy on a single numeric column)
-        # Note: We filter for countries with enough transactions to be statistically significant
-        rates = (df.groupby('country')['class']
-                 .agg(['mean', 'count'])
-                 .query('count > 10')  # Ignore countries with <10 transactions
-                 .sort_values(by='mean', ascending=False)
-                 .head(top_n)
-                 .reset_index())
+        rates = (
+            df.groupby('country')['class']
+            .agg(['mean', 'count'])
+            .query('count > 10')
+            .sort_values(by='mean', ascending=False)
+            .head(top_n)
+            .reset_index()
+        )
 
         plt.figure(figsize=(10, 7))
-        ax = sns.barplot(data=rates, x='mean', y='country', palette='Reds_r')
+        ax = sns.barplot(
+            data=rates,
+            x='mean',
+            y='country',
+            palette='Reds_r'
+        )
 
         for i, v in enumerate(rates['mean']):
             ax.text(v + 0.005, i, f'{v:.2%}', va='center',
@@ -117,6 +158,7 @@ class Visualizer:
         plt.xlim(0, rates['mean'].max() * 1.2)
         plt.tight_layout()
         plt.show()
+
     def plot_time_series(self, df):
         """Daily and Hourly time-series analysis for fraud patterns."""
         if not pd.api.types.is_datetime64_any_dtype(df['purchase_time']):
@@ -124,7 +166,7 @@ class Visualizer:
 
         fig, axes = plt.subplots(2, 1, figsize=(15, 12))
 
-        # 1. Daily Trend
+        # Daily Trend
         daily = df.set_index('purchase_time').resample('D')[
             'class'].agg(['count', 'sum'])
         axes[0].plot(daily.index, daily['count'], label='Total',
@@ -134,15 +176,26 @@ class Visualizer:
         axes[0].set_title('Daily Trends', fontsize=16, loc='left')
         axes[0].legend(frameon=False)
 
-        # 2. Hourly Pattern
+        # Hourly Pattern
         if 'hour_of_day' not in df.columns:
             df['hour_of_day'] = df['purchase_time'].dt.hour
 
         hourly = df.groupby('hour_of_day')['class'].agg(['count', 'sum'])
-        sns.barplot(x=hourly.index, y=hourly['count'],
-                    color=self.neutral_color, alpha=0.4, ax=axes[1], label='Total')
         sns.barplot(
-            x=hourly.index, y=hourly['sum'], color=self.fraud_color, ax=axes[1], label='Fraud')
+            x=hourly.index,
+            y=hourly['count'],
+            color=self.neutral_color,
+            alpha=0.4,
+            ax=axes[1],
+            label='Total'
+        )
+        sns.barplot(
+            x=hourly.index,
+            y=hourly['sum'],
+            color=self.fraud_color,
+            ax=axes[1],
+            label='Fraud'
+        )
         axes[1].set_title('Hourly Fraud Seasonality', fontsize=16, loc='left')
         axes[1].legend(frameon=False)
 
