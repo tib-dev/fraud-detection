@@ -14,10 +14,11 @@ features:
     - time_since_signup
     - hour_of_day
     - day_of_week
-    - tx_count_1h
-    - tx_count_24h
+    - tx_count_uder_id_1h
+    - tx_count_uder_id_24h
     - device_id_count
     - ip_address_count
+    - user_total_transactions
 
   # -----------------------------
   # Categorical features
