@@ -293,3 +293,5 @@ def plot_fraud_by_hour_day(df):
 
     plt.tight_layout()
     plt.show()
+
+
