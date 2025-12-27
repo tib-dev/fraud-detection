@@ -1,15 +1,25 @@
 import mlflow
+from pathlib import Path
 from fraud_detection.utils.project_root import get_project_root
 
 
-def set_mlflow_tracking():
-    # Get project root reliably
+def set_mlflow_tracking(
+    experiment_name: str = "fraud_detection_models",
+):
+    """
+    Configure MLflow tracking to use project-root/mlruns (Windows-safe).
+    """
+
     project_root = get_project_root()
     mlruns_path = project_root / "mlruns"
 
-    # Make folder if it doesn't exist
-    mlruns_path.mkdir(exist_ok=True)
+    # Ensure directory exists
+    mlruns_path.mkdir(parents=True, exist_ok=True)
 
-    # Use file:// URI with forward slashes
-    mlflow.set_tracking_uri(f"file:///{mlruns_path.resolve().as_posix()}")
-    mlflow.set_experiment("fraud_detection_models")
+    # IMPORTANT: file:/// + forward slashes
+    tracking_uri = f"file:///{mlruns_path.resolve().as_posix()}"
+
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment(experiment_name)
+
+    return tracking_uri
