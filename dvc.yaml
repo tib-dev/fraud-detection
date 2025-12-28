@@ -9,3 +9,12 @@ stages:
       - data/processed/train_resampled.parquet
       - data/processed/test_original.parquet
       - data/processed/train_original.parquet
+
+  training:
+    cmd: python scripts/run_ecommerce_training.py -- train_resampled.parquet test_original.parquet train_original.parquet
+    deps:
+      - scripts/run_ecommerce_training.py
+      - data/processed/train_resampled.parquet
+      - data/processed/test_original.parquet
+      - data/processed/train_original.parquet
+    outs:

@@ -1,0 +1,62 @@
+profiles:
+
+  credit_card:
+    description: >
+      Credit card fraud detection.
+      False negatives are extremely costly due to direct financial loss.
+      Recall is prioritized over precision.
+
+    business_costs:
+      false_positive: 1        # customer friction, support cost
+      false_negative: 25       # direct fraud loss
+
+    scoring:
+      weights:
+        recall: 0.45
+        precision: 0.15
+        auc_pr: 0.30
+        f1: 0.10
+
+    promotion:
+      metric: total_score
+      min_improvement: 0.02    # require +2% improvement to replace Production
+      stage_on_promote: Production
+
+    thresholds:
+      optimize: true
+      metric: recall
+
+    registry:
+      registered_model_name: credit_card_model
+      experiment_name: fraud_detection_models
+
+
+  ecommerce:
+    description: >
+      E-commerce fraud detection.
+      Balance between blocking fraud and avoiding user drop-off.
+      Precision and AUC-PR are more important.
+
+    business_costs:
+      false_positive: 5        # lost conversion / customer trust
+      false_negative: 15       # fraud + chargeback
+
+    scoring:
+      weights:
+        precision: 0.35
+        recall: 0.25
+        auc_pr: 0.30
+        f1: 0.10
+
+    promotion:
+      metric: total_score
+      min_improvement: 0.03
+      stage_on_promote: Production
+
+    thresholds:
+      optimize: true
+      metric: f1
+
+    registry:
+      registered_model_name: ecommerce_model
+      experiment_name: fraud_detection_models
