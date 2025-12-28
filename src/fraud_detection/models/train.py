@@ -117,7 +117,7 @@ def train_and_evaluate(
         # Log model to profile-specific registry path
         mlflow.sklearn.log_model(
             sk_model=pipeline,
-            artifact_path="model",
+            name="model",
             registered_model_name=registered_model_name,
         )
 

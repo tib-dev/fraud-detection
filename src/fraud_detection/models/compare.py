@@ -1,5 +1,4 @@
 import mlflow
-import mlflow.sklearn
 import pandas as pd
 from mlflow.tracking import MlflowClient
 from sklearn.metrics import confusion_matrix
