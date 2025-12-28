@@ -7,7 +7,8 @@ from fraud_detection.models.metrics import (
     compute_classification_metrics,
     find_best_threshold,
 )
-from fraud_detection.models.register import set_mlflow_tracking
+from fraud_detection.models.tracker import set_mlflow_tracking
+from fraud_detection.core.settings import settings
 
 
 def train_and_evaluate(
@@ -18,75 +19,45 @@ def train_and_evaluate(
     y_test,
     *,
     model_name: str,
-    registered_model_name: str,
+    profile_name: str = None,
     optimize_threshold: bool = True,
-    threshold_metric: str = "f1",
+    threshold_metric: str = None,
 ):
-    
     """
-    Train a classification pipeline, optimize the decision threshold,
-    evaluate on a test set, and log everything to MLflow with model registry.
-
-    This function:
-    - Fits the provided sklearn / imblearn pipeline
-    - Optionally optimizes the classification threshold using cross-validated
-      probability predictions on the training set
-    - Evaluates model performance on the test set
-    - Logs parameters, metrics, and the trained model to MLflow
-    - Registers the model under a specified registered model name
-
-    Parameters
-    ----------
-    pipeline :
-        Sklearn or imblearn pipeline with a classifier that implements
-        `predict_proba`.
-    X_train : pd.DataFrame
-        Training feature matrix.
-    y_train : pd.Series
-        Training target labels.
-    X_test : pd.DataFrame
-        Test feature matrix.
-    y_test : pd.Series
-        Test target labels.
-    model_name : str
-        Human-readable name for the MLflow run (e.g. "XGBoost Credit Card").
-    registered_model_name : str
-        Name under which the model will be registered in MLflow
-        (e.g. "credit_card_model" or "fraud_model").
-    optimize_threshold : bool, default=True
-        Whether to optimize the classification threshold using cross-validation
-        on the training data.
-    threshold_metric : str, default="f1"
-        Metric used for threshold optimization. Supported values:
-        "f1", "precision", "recall".
-
-    Returns
-    -------
-    pipeline :
-        The trained pipeline.
-    metrics : dict
-        Dictionary containing evaluation metrics such as precision, recall,
-        F1-score, AUC-PR, ROC-AUC, and the selected threshold.
-    threshold : float
-        Final decision threshold used to convert probabilities into
-        binary predictions.
+    Train a classification pipeline, optionally optimize threshold, evaluate on test set,
+    compute business score based on profile weights, and log everything to MLflow.
+    Automatically uses the profile's registered model name and experiment.
     """
+
+    # ------------------------------------------------------
+    # Get profile (if provided)
+    # ------------------------------------------------------
+    profile = None
+    if profile_name:
+        profile = settings.get("profiles", {}).get(profile_name)
+        if profile is None:
+            raise ValueError(
+                f"Profile '{profile_name}' not found in settings.")
+
+    # Get experiment name and registered model from profile
+    experiment_name = profile["registry"]["experiment_name"] if profile else "default_experiment"
+    registered_model_name = profile["registry"]["registered_model_name"] if profile else "default_model"
 
     # ------------------------------------------------------
     # MLflow setup
     # ------------------------------------------------------
-    set_mlflow_tracking()
+    set_mlflow_tracking(experiment_name=experiment_name)
 
     # ------------------------------------------------------
-    # Train
+    # Train model
     # ------------------------------------------------------
     pipeline.fit(X_train, y_train)
 
     # ------------------------------------------------------
-    # Threshold optimization (CV-based)
+    # Threshold optimization
     # ------------------------------------------------------
     threshold = 0.5
-    if optimize_threshold:
+    if optimize_threshold or (profile and profile.get("thresholds", {}).get("optimize", False)):
         y_train_proba = cross_val_predict(
             clone(pipeline),
             X_train,
@@ -95,11 +66,10 @@ def train_and_evaluate(
             method="predict_proba",
         )[:, 1]
 
+        threshold_metric = threshold_metric or profile.get(
+            "thresholds", {}).get("metric", "f1")
         threshold, _ = find_best_threshold(
-            y_train.values,
-            y_train_proba,
-            metric=threshold_metric,
-        )
+            y_train.values, y_train_proba, metric=threshold_metric)
 
     # ------------------------------------------------------
     # Evaluation
@@ -107,18 +77,28 @@ def train_and_evaluate(
     y_proba = pipeline.predict_proba(X_test)[:, 1]
     y_pred = (y_proba >= threshold).astype(int)
 
-    metrics = compute_classification_metrics(
-        y_test.values,
-        y_pred,
-        y_proba,
-    )
+    metrics = compute_classification_metrics(y_test.values, y_pred, y_proba)
     metrics["threshold"] = threshold
+    metrics["y_true"] = y_test.values
+    metrics["y_pred"] = y_pred
 
     # ------------------------------------------------------
-    # MLflow logging + model registry
+    # Compute business / profile score
     # ------------------------------------------------------
-    with mlflow.start_run(run_name=model_name):
+    if profile:
+        weights = profile.get("scoring", {}).get("weights", {})
+        business_score = sum(metrics[k] * w for k,
+                             w in weights.items() if k in metrics)
+    else:
+        business_score = 0.4 * metrics["recall"] + 0.3 * \
+            metrics["precision"] + 0.3 * metrics["auc_pr"]
 
+    metrics["total_score"] = business_score
+
+    # ------------------------------------------------------
+    # MLflow logging
+    # ------------------------------------------------------
+    with mlflow.start_run(run_name=model_name) as run:
         mlflow.log_params({
             "model_name": model_name,
             "threshold_metric": threshold_metric,
@@ -131,14 +111,16 @@ def train_and_evaluate(
             "f1": metrics["f1"],
             "auc_pr": metrics["auc_pr"],
             "roc_auc": metrics["roc_auc"],
+            "total_score": business_score,
         })
 
-        # ✅ Correct modern API (no artifact_path warning)
+        # Log model to profile-specific registry path
         mlflow.sklearn.log_model(
             sk_model=pipeline,
-            name="model",
+            artifact_path="model",
             registered_model_name=registered_model_name,
         )
 
-    return pipeline, metrics, threshold
+        run_id = run.info.run_id
 
+    return pipeline, metrics, threshold, run_id
