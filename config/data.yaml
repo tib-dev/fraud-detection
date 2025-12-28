@@ -8,3 +8,5 @@ paths:
   reports:
     reports_dir: "reports"
     plots_dir: "reports/plots"
+  models: 
+    models_dir: models/
