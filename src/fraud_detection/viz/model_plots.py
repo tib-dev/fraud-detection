@@ -5,6 +5,7 @@ Includes functions for confusion matrix, precision-recall curve, and
 classification report plotting.
 """
 
+from sklearn.metrics import roc_curve, roc_auc_score
 from typing import Optional
 import numpy as np
 import pandas as pd
@@ -84,6 +85,34 @@ def plot_precision_recall_curve(
     ax.legend(loc="best")
 
     return ax
+
+
+def plot_roc_curve(
+    y_true: np.ndarray,
+    y_proba: np.ndarray,
+    model_name: str = "Model",
+    ax: Optional[plt.Axes] = None,
+) -> plt.Axes:
+    """
+    Plot ROC curve with AUC annotation.
+    """
+    fpr, tpr, _ = roc_curve(y_true, y_proba)
+    auc_roc = roc_auc_score(y_true, y_proba)
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 6))
+
+    ax.plot(fpr, tpr, label=f"{model_name} (AUC = {auc_roc:.4f})")
+    ax.plot([0, 1], [0, 1], linestyle="--", color="gray", alpha=0.6)
+
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate")
+    ax.set_title("ROC Curve")
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="lower right")
+
+    return ax
+
 
 
 def get_classification_report_df(
