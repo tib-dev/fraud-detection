@@ -9,4 +9,5 @@ paths:
     reports_dir: "reports"
     plots_dir: "reports/plots"
   models: 
-    models_dir: models/
+    e_models_dir: models/ecommerce
+    c_models_dir: models/credit_card
