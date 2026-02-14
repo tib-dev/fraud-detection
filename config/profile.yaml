@@ -1,61 +1,108 @@
-profiles:
+project:
+  name: fraud_detection_system
+  version: 1.0.0
+  environment: development # development | staging | production
+  random_seed: 42
 
+global:
+  evaluation:
+    primary_metric: auc_pr
+    require_pr_auc_min: 0.70
+    cross_validation_folds: 5
+
+  scoring:
+    normalize_metrics: true
+    use_cost_sensitive_scoring: true
+
+  promotion:
+    enforce_minimum_improvement: true
+    comparison_metric: total_score
+
+  registry:
+    backend: mlflow
+    tracking_uri: http://localhost:5000
+
+profiles:
   credit_card:
     description: >
-      Credit card fraud detection.
-      False negatives are extremely costly due to direct financial loss.
-      Recall is prioritized over precision.
+      Credit card fraud detection system.
+      Designed for high financial loss scenarios.
+      Strong emphasis on fraud recall and risk mitigation.
 
-    business_costs:
-      false_positive: 1        # customer friction, support cost
-      false_negative: 25       # direct fraud loss
+    business:
+      costs:
+        false_positive: 1
+        false_negative: 25
+      optimize_for: minimize_expected_loss
 
-    scoring:
-      weights:
+    evaluation:
+      metrics:
+        - precision
+        - recall
+        - auc_pr
+        - f1
+      scoring_weights:
         recall: 0.45
         precision: 0.15
         auc_pr: 0.30
         f1: 0.10
 
+    thresholds:
+      enabled: true
+      strategy: cost_based # cost_based | metric_based
+      metric: recall # used if metric_based
+      min_precision_constraint: 0.80
+      search:
+        method: grid
+        steps: 200
+
     promotion:
       metric: total_score
-      min_improvement: 0.02    # require +2% improvement to replace Production
+      min_improvement: 0.02
       stage_on_promote: Production
-
-    thresholds:
-      optimize: true
-      metric: recall
+      require_stability_check: true
 
     registry:
       registered_model_name: credit_card_model
       experiment_name: fraud_detection_models
 
-
   ecommerce:
     description: >
       E-commerce fraud detection.
-      Balance between blocking fraud and avoiding user drop-off.
-      Precision and AUC-PR are more important.
+      Balanced approach between fraud prevention
+      and customer experience protection.
 
-    business_costs:
-      false_positive: 5        # lost conversion / customer trust
-      false_negative: 15       # fraud + chargeback
+    business:
+      costs:
+        false_positive: 5
+        false_negative: 15
+      optimize_for: balanced_risk
 
-    scoring:
-      weights:
+    evaluation:
+      metrics:
+        - precision
+        - recall
+        - auc_pr
+        - f1
+      scoring_weights:
         precision: 0.35
         recall: 0.25
         auc_pr: 0.30
         f1: 0.10
 
+    thresholds:
+      enabled: true
+      strategy: metric_based
+      metric: f1
+      search:
+        method: grid
+        steps: 200
+
     promotion:
       metric: total_score
       min_improvement: 0.03
       stage_on_promote: Production
-
-    thresholds:
-      optimize: true
-      metric: f1
+      require_stability_check: true
 
     registry:
       registered_model_name: ecommerce_model
