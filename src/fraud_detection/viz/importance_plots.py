@@ -105,7 +105,7 @@ def plot_single_prediction_bar(
     values.plot(kind="barh", color=colors)
 
     plt.axvline(0, color="black", linewidth=1)
-    plt.title("Top Factors Influencing This Prediction")
+    plt.title("Top Factors Influencing {index} Prediction")
     plt.xlabel("Impact on Fraud Probability")
     plt.tight_layout()
     plt.show()

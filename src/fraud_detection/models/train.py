@@ -1,124 +1,159 @@
+"""
+Train and evaluate ML models for fraud detection.
+
+Features:
+- Profile-aware: reads scoring weights and business costs from settings
+- Threshold optimization: metric-based or cost-based
+- Computes classification metrics, business score, and total_score
+- Logs everything to MLflow, including the trained pipeline
+"""
+
+from typing import Tuple, Dict
 import mlflow
 import mlflow.sklearn
 from sklearn.base import clone
+from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
 
-from fraud_detection.models.metrics import (
+from fraud_detection.models.evaluation import (
     compute_classification_metrics,
-    find_best_threshold,
+    compute_business_score,
+    find_best_threshold_metric_based,
+    find_best_threshold_cost_based,
 )
 from fraud_detection.models.tracker import set_mlflow_tracking
 from fraud_detection.core.settings import settings
 
 
+# ----------------------------
+# Profile helpers
+# ----------------------------
+def get_profile(profile_name: str) -> dict:
+    """Fetch a fraud detection profile safely from settings."""
+    profile = settings.get("profiles", {}).get(profile_name)
+    if not profile:
+        raise ValueError(f"Profile '{profile_name}' not found in settings.")
+    return profile
+
+
+def compute_total_score(metrics: dict, profile_name: str) -> float:
+    """
+    Compute total_score = weighted ML performance + business score
+    """
+    profile = get_profile(profile_name)
+    weights = profile.get("evaluation", {}).get("scoring_weights", {})
+    perf_score = sum(metrics.get(metric, 0.0) * weight for metric, weight in weights.items())
+    cost_score = metrics.get("business_score", 0.0)
+    return perf_score + cost_score
+
+
+# ----------------------------
+# Training & evaluation
+# ----------------------------
 def train_and_evaluate(
-    pipeline,
+    pipeline: Pipeline,
     X_train,
     y_train,
     X_test,
     y_test,
     *,
     model_name: str,
-    profile_name: str = None,
-    optimize_threshold: bool = True,
-    threshold_metric: str = None,
-):
+    profile_name: str,
+) -> Tuple[Pipeline, Dict[str, float], float, str]:
     """
-    Train a classification pipeline, optionally optimize threshold, evaluate on test set,
-    compute business score based on profile weights, and log everything to MLflow.
-    Automatically uses the profile's registered model name and experiment.
+    Train, evaluate, and log a model with MLflow.
+
+    Returns:
+        pipeline: trained sklearn pipeline
+        metrics: dict of metrics + business score + total_score
+        threshold: float used for binary classification
+        run_id: MLflow run id
     """
+    profile = get_profile(profile_name)
 
-    # ------------------------------------------------------
-    # Get profile (if provided)
-    # ------------------------------------------------------
-    profile = None
-    if profile_name:
-        profile = settings.get("profiles", {}).get(profile_name)
-        if profile is None:
-            raise ValueError(
-                f"Profile '{profile_name}' not found in settings.")
+    # MLflow experiment & model names
+    experiment_name = profile.get("registry", {}).get("experiment_name", "default_experiment")
+    registered_model_name = profile.get("registry", {}).get("registered_model_name", "default_model")
 
-    # Get experiment name and registered model from profile
-    experiment_name = profile["registry"]["experiment_name"] if profile else "default_experiment"
-    registered_model_name = profile["registry"]["registered_model_name"] if profile else "default_model"
+    # Cross-validation folds
+    cv_folds = settings.get("global", {}).get("evaluation", {}).get("cross_validation_folds", 5)
 
-    # ------------------------------------------------------
-    # MLflow setup
-    # ------------------------------------------------------
-    set_mlflow_tracking(experiment_name=experiment_name)
+    # Initialize MLflow tracking
+    set_mlflow_tracking(experiment_name)
 
-    # ------------------------------------------------------
-    # Train model
-    # ------------------------------------------------------
+    # ----------------------------
+    # Train the pipeline
+    # ----------------------------
     pipeline.fit(X_train, y_train)
 
-    # ------------------------------------------------------
+    # ----------------------------
     # Threshold optimization
-    # ------------------------------------------------------
+    # ----------------------------
+    threshold_config = profile.get("thresholds", {})
+    strategy = threshold_config.get("strategy", "metric_based")
     threshold = 0.5
-    if optimize_threshold or (profile and profile.get("thresholds", {}).get("optimize", False)):
+
+    if threshold_config.get("enabled", True):
         y_train_proba = cross_val_predict(
             clone(pipeline),
             X_train,
             y_train,
-            cv=3,
-            method="predict_proba",
+            cv=cv_folds,
+            method="predict_proba"
         )[:, 1]
 
-        threshold_metric = threshold_metric or profile.get(
-            "thresholds", {}).get("metric", "f1")
-        threshold, _ = find_best_threshold(
-            y_train.values, y_train_proba, metric=threshold_metric)
+        if strategy == "metric_based":
+            metric = threshold_config.get("metric", "f1")
+            threshold, _ = find_best_threshold_metric_based(y_train.values, y_train_proba, metric)
+        elif strategy == "cost_based":
+            costs = profile.get("business", {}).get("costs", {})
+            threshold, _ = find_best_threshold_cost_based(
+                y_train.values,
+                y_train_proba,
+                costs.get("false_positive", 0),
+                costs.get("false_negative", 0),
+            )
 
-    # ------------------------------------------------------
-    # Evaluation
-    # ------------------------------------------------------
+    # ----------------------------
+    # Evaluation on test set
+    # ----------------------------
     y_proba = pipeline.predict_proba(X_test)[:, 1]
     y_pred = (y_proba >= threshold).astype(int)
 
     metrics = compute_classification_metrics(y_test.values, y_pred, y_proba)
+
+    # Business score
+    costs = profile.get("business", {}).get("costs", {})
+    metrics["business_score"] = compute_business_score(
+        y_test.values,
+        y_pred,
+        false_positive_cost=costs.get("false_positive", 0),
+        false_negative_cost=costs.get("false_negative", 0),
+    )
     metrics["threshold"] = threshold
-    metrics["y_true"] = y_test.values
-    metrics["y_pred"] = y_pred
 
-    # ------------------------------------------------------
-    # Compute business / profile score
-    # ------------------------------------------------------
-    if profile:
-        weights = profile.get("scoring", {}).get("weights", {})
-        business_score = sum(metrics[k] * w for k,
-                             w in weights.items() if k in metrics)
-    else:
-        business_score = 0.4 * metrics["recall"] + 0.3 * \
-            metrics["precision"] + 0.3 * metrics["auc_pr"]
+    # Total score (weighted ML metrics + business)
+    metrics["total_score"] = compute_total_score(metrics, profile_name)
 
-    metrics["total_score"] = business_score
-
-    # ------------------------------------------------------
+    # ----------------------------
     # MLflow logging
-    # ------------------------------------------------------
+    # ----------------------------
+    mlflow.set_experiment(experiment_name)
     with mlflow.start_run(run_name=model_name) as run:
         mlflow.log_params({
             "model_name": model_name,
-            "threshold_metric": threshold_metric,
+            "profile": profile_name,
+            "threshold_strategy": strategy,
             "threshold": threshold,
         })
 
-        mlflow.log_metrics({
-            "precision": metrics["precision"],
-            "recall": metrics["recall"],
-            "f1": metrics["f1"],
-            "auc_pr": metrics["auc_pr"],
-            "roc_auc": metrics["roc_auc"],
-            "total_score": business_score,
-        })
+        metric_keys = ["precision", "recall", "f1", "auc_pr", "roc_auc", "business_score", "total_score"]
+        mlflow.log_metrics({k: metrics[k] for k in metric_keys if k in metrics})
 
-        # Log model to profile-specific registry path
         mlflow.sklearn.log_model(
             sk_model=pipeline,
-            name="model",
-            registered_model_name=registered_model_name,
+            artifact_path="model",
+            registered_model_name=registered_model_name
         )
 
         run_id = run.info.run_id

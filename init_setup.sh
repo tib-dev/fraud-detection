@@ -11,7 +11,7 @@ set -e
 set -o pipefail
 
 echo "=============================================="
-echo "Fraud Detection - Project Structure Setup"
+echo "RAF-complaint-Chatbot - Project Structure Setup"
 echo "=============================================="
 
 # ----------------------------
