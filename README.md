@@ -257,10 +257,10 @@ streamlit run dashboard/app.py
 
 #### Dashboard Demo 
 
-![alt text](dashboard/Demo/image-1.png)
+![alt text](dashboard/Demo/image-4.png)
 ![alt text](dashboard/Demo/image-2.png)
 ![alt text](dashboard/Demo/image-3.png)
-![alt text](dashboard/Demo/image-4.png)
+![alt text](dashboard/Demo/image-1.png)
 ![alt text](dashboard/Demo/image-5.png)
 
 ## Author
