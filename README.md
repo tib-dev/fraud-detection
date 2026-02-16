@@ -1,5 +1,7 @@
 # Fraud Detection System for Financial & E-commerce Transactions
 
+![CI](https://github.com/tib-dev/fraud-detection/actions/workflows/ci.yml/badge.svg)
+
 An end-to-end, production-ready **fraud detection platform** designed to identify suspicious transactions in real time.
 The system transforms raw transactional and behavioral data into fraud signals, trains and tracks machine learning models, and exposes predictions through a scalable API.
 
@@ -144,101 +146,38 @@ Derived features include:
 fraud-detection/
 │
 ├── config/                          # YAML configuration files for system behavior and experiments
-│   ├── paths.yaml                    # Data paths, raw/interim/processed directories
-│   ├── features.yaml                 # Feature switches, definitions, and pipelines
-│   ├── profile.yaml                  # Training settings, evaluation metrics, hyperparameters
-│   └── api.yaml                      # API serving configuration
 │
 ├── data/                             # Storage for all dataset versions
 │   ├── raw/                          # Original datasets (never modified)
 │   ├── interim/                      # Cleaned but not fully transformed data
 │   ├── processed/                    # Final model-ready datasets for training and inference
-│   └── external/                     # Third-party or reference data (e.g., IP mapping)
 │
 ├── notebooks/                        # Jupyter notebooks for EDA, feature engineering, modeling
-│   ├── eda_ecommerce.ipynb                   # E-commerce fraud exploratory analysis
-│   ├── credit_card_eda_feature_engineering.ipynb  # Credit card fraud EDA and feature engineering
-│   ├── credit_card_fraud_modeling.ipynb     # Modeling experiments for credit card fraud
-│   ├── ecommerce_fraud_modeling.ipynb       # Modeling experiments for e-commerce fraud
-│   ├── ecommerce_eda_feature_engineering.ipynb   # Feature exploration and engineering for e-commerce
-│   └── explainability.ipynb                 # SHAP & local/global explanations of trained models
 │
 ├── src/
 │   └── fraud_detection/               # Main Python package
 │       ├── __init__.py                # Marks fraud_detection as a package
 │
 │       ├── analysis/                  # Exploratory data analysis tools
-│       │   ├── __init__.py
-│       │   └── eda.py                 # Functions for EDA and visualization of fraud patterns
-│
-│       ├── api/                       # FastAPI serving layer
-│       │   ├── __init__.py
-│       │   ├── main.py                # API entry point (prediction service)
-│       │   ├── schemas.py             # Request/response Pydantic models
-│       │   └── utils.py               # Helper functions for API operations
 │
 │       ├── core/                      # Global core functionality and configuration
-│       │   ├── __init__.py
-│       │   └── settings.py            # Loads settings and global constants
 │
 │       ├── data/                      # Data ingestion and preprocessing
-│       │   ├── __init__.py
-│       │   ├── cleaning.py            # Missing values, duplicates, type fixes
-│       │   ├── ip_geolocation.py      # IP → Country mapping logic
-│       │   └── loader.py              # CSV/parquet dataset loading utilities
 │
 │       ├── explainability/            # Model explainability and interpretation
-│       │   ├── __init__.py
-│       │   ├── feature_importance.py  # Built-in and SHAP feature importance extraction
-│       │   ├── predictions.py         # Prediction-level explanations (TP, FP, FN)
-│       │   └── shap_explainer.py      # SHAP TreeExplainer utilities and single prediction analysis
 │
 │       ├── features/                  # Feature engineering modules
-│       │   ├── __init__.py
-│       │   ├── custom_features.py     # Domain-specific features
-│       │   ├── pipeline.py            # Orchestrates full feature pipeline
-│       │   └── preprocessing.py       # Scaling, encoding, and transformations
 │
 │       ├── models/                    # Model training, evaluation, and persistence
-│       │   ├── __init__.py
-│       │   ├── compare.py             # Model comparison utilities
-│       │   ├── evaluation.py          # Evaluation metrics for fraud detection
-│       │   ├── persistence.py         # Model saving/loading
-│       │   ├── pipeline.py            # ML pipeline utilities
-│       │   ├── tracker.py             # Experiment tracking & logging
-│       │   ├── train.py               # End-to-end training scripts
-│       │   └── tuning.py              # Hyperparameter tuning routines
 │
 │       ├── utils/                      # Shared helper functions
-│       │   ├── __init__.py
-│       │   ├── helpers.py             # Reusable utility functions
-│       │   ├── mlflow_tracking.py     # MLflow experiment tracking helpers
-│       │   └── project_root.py        # Resolving project root reliably
 │
 │       └── viz/                        # Visualization utilities
-│           ├── __init__.py
-│           ├── importance_plots.py    # Feature importance plots
-│           ├── model_plots.py         # Model-specific plots (ROC, confusion matrix)
-│           └── plots.py               # Generic visualization utilities
 │
 ├── tests/                                # Automated testing
-│   ├── test_data_handler.py
-│   ├── test_feature_engineering.py
-│   ├── test_evaluation.py
-│   ├── test_model_training.py
-│   ├── test_tuning.py
-│   └── test_api.py
 │
-├── docker/                               # Containerization & deployment
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   └── start.sh
 │
 ├── scripts/                              # CLI & automation entry points
-│   ├── run_pipeline.py
-│   ├── run_ecommerce_training.py
-│   ├── run_explainability.py
-│   └── run_api.py
 │
 ├── mlruns/                               # MLflow experiment tracking
 ├── dvc.yaml                              # DVC pipeline definition
@@ -460,3 +399,20 @@ pip install -e .
 ```bash
 dvc repro
 ```
+
+### Run Dashboard
+
+```bash
+streamlit run dashboard/app.py
+```
+
+## Author
+
+Tibebu Kaleb | ML/AI Engineer
+
+## 🌐 Connect
+
+[![Website](https://img.shields.io/badge/Website-Visit-00C7B7?style=flat&logo=netlify&logoColor=white)](https://tibebukaleb.netlify.app)
+[![Email](https://img.shields.io/badge/Email-Contact-D14836?style=flat&logo=gmail&logoColor=white)](mailto:wise.tibec@gmail.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-View-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/tibeb)
+[![Instagram](https://img.shields.io/badge/Instagram-Follow-E4405F?style=flat&logo=instagram&logoColor=white)](https://instagram.com/wise.tibec)
