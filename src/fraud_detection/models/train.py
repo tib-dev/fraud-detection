@@ -84,7 +84,7 @@ def train_and_evaluate(
     profile_name: str,
 ) -> Tuple[Pipeline, Dict[str, float], float, str]:
     """
-    Train a machine learning pipeline, optimize threshold, evaluate metrics, 
+    Train a machine learning pipeline, optimize threshold, evaluate metrics,
     and log results to MLflow.
 
     Args:
