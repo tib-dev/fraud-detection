@@ -455,3 +455,12 @@ pip install -e .
 dvc repro
 ```
 
+## Author 
+Tibebu Kaleb | ML/AI Engineer
+
+## 🌐 Connect  
+[![Website](https://img.shields.io/badge/Website-Visit-00C7B7?style=flat&logo=netlify&logoColor=white)](https://tibebukaleb.netlify.app)
+[![Email](https://img.shields.io/badge/Email-Contact-D14836?style=flat&logo=gmail&logoColor=white)](mailto:wise.tibec@gmail.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-View-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/tibeb)
+[![Instagram](https://img.shields.io/badge/Instagram-Follow-E4405F?style=flat&logo=instagram&logoColor=white)](https://instagram.com/wise.tibec)
+
