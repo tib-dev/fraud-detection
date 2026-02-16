@@ -255,7 +255,7 @@ dvc repro
 streamlit run dashboard/app.py
 ```
 
-#### Dashboard Demo
+#### Dashboard Demo 
 
 ![alt text](dashboard/Demo/image-1.png)
 ![alt text](dashboard/Demo/image-2.png)
