@@ -1,6 +1,6 @@
 # Fraud Detection System for Financial & E-commerce Transactions
 
-An end-to-end, production-ready **fraud detection platform** designed to identify suspicious transactions in real time.  
+An end-to-end, production-ready **fraud detection platform** designed to identify suspicious transactions in real time.
 The system transforms raw transactional and behavioral data into fraud signals, trains and tracks machine learning models, and exposes predictions through a scalable API.
 
 ---
@@ -26,7 +26,7 @@ The system transforms raw transactional and behavioral data into fraud signals, 
 
 ## Project Overview
 
-This project implements a **Fraud Detection System** for financial and e-commerce transactions.  
+This project implements a **Fraud Detection System** for financial and e-commerce transactions.
 It is designed to detect fraudulent behavior in environments where transaction volume is high, patterns evolve quickly, and false positives are costly.
 
 The system covers the full lifecycle:
@@ -44,7 +44,7 @@ The system covers the full lifecycle:
 
 ## Business Context
 
-Financial institutions and e-commerce platforms face continuous losses due to fraudulent transactions.  
+Financial institutions and e-commerce platforms face continuous losses due to fraudulent transactions.
 Fraud patterns change rapidly, making rule-based systems brittle and hard to maintain.
 
 This project supports:
@@ -73,7 +73,7 @@ This system is designed with these constraints in mind.
 
 ### Class Imbalance Strategy
 
-Fraud labels are highly imbalanced.  
+Fraud labels are highly imbalanced.
 To address this, the project supports:
 
 - SMOTE and controlled oversampling
@@ -140,7 +140,7 @@ Derived features include:
 
 ## Project Structure
 
-```text
+````text
 fraud-detection/
 │
 ├── config/                          # YAML configuration files for system behavior and experiments
@@ -202,7 +202,7 @@ fraud-detection/
 │       ├── models/                    # Model training, evaluation, and persistence
 │       │   ├── __init__.py
 │       │   ├── compare.py             # Model comparison utilities
-│       │   ├── metrics.py             # Evaluation metrics for fraud detection
+│       │   ├── evaluation.py          # Evaluation metrics for fraud detection
 │       │   ├── persistence.py         # Model saving/loading
 │       │   ├── pipeline.py            # ML pipeline utilities
 │       │   ├── tracker.py             # Experiment tracking & logging
@@ -222,10 +222,11 @@ fraud-detection/
 │           └── plots.py               # Generic visualization utilities
 │
 ├── tests/                                # Automated testing
-│   ├── test_data_cleaning.py
+│   ├── test_data_handler.py
 │   ├── test_feature_engineering.py
-│   ├── test_imbalance_handling.py
+│   ├── test_evaluation.py
 │   ├── test_model_training.py
+│   ├── test_tuning.py
 │   └── test_api.py
 │
 ├── docker/                               # Containerization & deployment
@@ -418,7 +419,7 @@ fraud-detection/
 |  - Pipeline regression tests                      |
 |  - Explainability correctness                     |
 +--------------------------------------------------+
-```
+````
 
 ## Setup & Installation
 
@@ -428,29 +429,34 @@ Clone the repository:
 git clone https://github.com/<tib-dev>/fraud_detection.git
 cd fraud_detection
 ```
+
 ### Create and activate a virtual environment:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 ```
+
 Install dependencies:
- - pyproject run
+
+- pyproject run
 
 ```bash
 
 pip install -r requirements.txt
 ```
- - pyproject run
- 
+
+- pyproject run
+
 ```bash
 
 pip install -e .
 ```
+
 ## Running the Project
 
 ### Run the full pipeline (DVC)
+
 ```bash
 dvc repro
 ```
-
