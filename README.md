@@ -189,175 +189,24 @@ fraud-detection/
 
 
 ## Architecture
-```text
-+--------------------------------------------------+
-|                Fraud Detection System            |
-|        End-to-End ML + Explainability Platform   |
-+--------------------------------------------------+
+```textRaw Data
+   ↓
+Data Loading & Validation
+   ↓
+IP Geolocation Enrichment
+   ↓
+Feature Engineering Pipeline
+   ↓
+Model Training & Hyperparameter Tuning
+   ↓
+Experiment Tracking (MLflow)
+   ↓
+Explainability (SHAP + Feature Importance)
+   ↓
+FastAPI Inference Layer
+   ↓
+Streamlit Risk Dashboard
 
-+--------------------------------------------------+
-|  Raw Transaction & Reference Data                |
-|--------------------------------------------------|
-|  - E-commerce / Banking transactions             |
-|  - IP → Country mapping tables                   |
-|  Location: data/raw/                             |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Data Access & Loading                            |
-|--------------------------------------------------|
-|  src/fraud_detection/data/loader.py               |
-|  - Centralized dataset loading                   |
-|  - Parquet / CSV abstraction                     |
-|  - Schema-aware reads                             |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Data Cleaning & Validation                       |
-|--------------------------------------------------|
-|  src/fraud_detection/data/cleaning.py             |
-|  - Missing value handling                         |
-|  - Duplicate removal                              |
-|  - Type normalization                             |
-|  - Timestamp coercion                             |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  IP Geolocation Enrichment                        |
-|--------------------------------------------------|
-|  src/fraud_detection/data/ip_geolocation.py       |
-|  - IP → integer conversion                        |
-|  - Range-based country mapping                    |
-|  - Safe merge (merge_asof)                        |
-|  - Unknown country handling                       |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Feature Engineering Pipeline                     |
-|--------------------------------------------------|
-|  src/fraud_detection/features/                    |
-|    ├─ custom_features.py                          |
-|    │   - Time features (hour, weekday)            |
-|    │   - Velocity features (1h / 24h counts)      |
-|    │   - Device & IP frequency                    |
-|    ├─ preprocessing.py                            |
-|    │   - Encoding                                 |
-|    │   - Scaling                                  |
-|    └─ pipeline.py                                 |
-|        - sklearn-compatible feature pipeline      |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Exploratory Data Analysis (EDA)                  |
-|--------------------------------------------------|
-|  src/fraud_detection/analysis/eda.py              |
-|  - Class imbalance analysis                       |
-|  - Feature distribution inspection                |
-|  - Fraud pattern exploration                      |
-|  - Business-oriented insights                     |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Model Training & Tuning                          |
-|--------------------------------------------------|
-|  src/fraud_detection/models/                      |
-|    ├─ train.py                                    |
-|    │   - End-to-end training pipeline              |
-|    ├─ tuning.py                                   |
-|    │   - Hyperparameter optimization               |
-|    ├─ compare.py                                  |
-|    │   - Model benchmarking                        |
-|    ├─ metrics.py                                  |
-|    │   - Recall-focused metrics (AUC-PR, Recall)  |
-|    ├─ pipeline.py                                 |
-|    │   - Full sklearn pipeline                     |
-|    └─ persistence.py                              |
-|        - Model save/load                           |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Experiment Tracking & Reproducibility            |
-|--------------------------------------------------|
-|  src/fraud_detection/models/tracker.py            |
-|  src/fraud_detection/utils/mlflow_tracking.py     |
-|  - MLflow experiment tracking                     |
-|  - Parameter & metric logging                     |
-|  - Model registry integration                     |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Explainability & Model Insights                  |
-|--------------------------------------------------|
-|  src/fraud_detection/explainability/              |
-|    ├─ feature_importance.py                       |
-|    │   - Built-in feature importance               |
-|    ├─ shap_explainer.py                           |
-|    │   - SHAP value computation                    |
-|    │   - Global & local explanations               |
-|    └─ predictions.py                              |
-|        - TP / FP / FN case extraction              |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Visualization Layer                              |
-|--------------------------------------------------|
-|  src/fraud_detection/viz/                         |
-|    ├─ plots.py                                    |
-|    │   - EDA & distribution plots                 |
-|    ├─ model_plots.py                              |
-|    │   - ROC, PR, confusion matrix                |
-|    └─ importance_plots.py                         |
-|        - Feature & SHAP bar plots                 |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Inference & API Layer                            |
-|--------------------------------------------------|
-|  src/fraud_detection/api/                         |
-|    ├─ main.py                                     |
-|    │   - FastAPI entry point                      |
-|    ├─ schemas.py                                  |
-|    │   - Request / response models                |
-|    └─ utils.py                                    |
-|        - Input validation & helpers               |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Configuration & Core Utilities                   |
-|--------------------------------------------------|
-|  src/fraud_detection/core/settings.py             |
-|  src/fraud_detection/utils/helpers.py             |
-|  src/fraud_detection/utils/project_root.py        |
-|  - Centralized configuration                      |
-|  - Path resolution                                |
-|  - Shared helpers                                 |
-+------------------------+-------------------------+
-                         |
-                         v
-+--------------------------------------------------+
-|  Testing & Quality Assurance                      |
-|--------------------------------------------------|
-|  tests/                                           |
-|    ├─ test_api.py                                 |
-|    ├─ test_data_handler.py                        |
-|    ├─ test_feature.py                             |
-|    ├─ test_feature_importance.py                  |
-|    └─ test_model_training.py                      |
-|  - Unit tests                                     |
-|  - Pipeline regression tests                      |
-|  - Explainability correctness                     |
-+--------------------------------------------------+
 ````
 
 ## Setup & Installation
@@ -365,7 +214,7 @@ fraud-detection/
 Clone the repository:
 
 ```bash
-git clone https://github.com/<tib-dev>/fraud_detection.git
+git clone https://github.com/<useraname>/fraud_detection.git
 cd fraud_detection
 ```
 
@@ -405,6 +254,14 @@ dvc repro
 ```bash
 streamlit run dashboard/app.py
 ```
+
+#### Dashboard Demo
+
+![alt text](dashboard/Demo/image-1.png)
+![alt text](dashboard/Demo/image-2.png)
+![alt text](dashboard/Demo/image-3.png)
+![alt text](dashboard/Demo/image-4.png)
+![alt text](dashboard/Demo/image-5.png)
 
 ## Author
 
