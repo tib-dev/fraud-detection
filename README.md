@@ -1,4 +1,5 @@
 # Fraud Detection System for Financial & E-commerce Transactions
+![CI](https://github.com/tib-dev/fraud-detection/actions/workflows/ci.yml/badge.svg)
 
 An end-to-end, production-ready **fraud detection platform** designed to identify suspicious transactions in real time.  
 The system transforms raw transactional and behavioral data into fraud signals, trains and tracks machine learning models, and exposes predictions through a scalable API.
